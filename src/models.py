@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean
-from sqlalchemy.orm import Mapped, mapped_column, relationship, ForeignKey
+from sqlalchemy import String, Boolean, ForeignKey, Enum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 import enum
 
@@ -14,16 +14,16 @@ class User(db.Model):
 
     __tablename__ = "User"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement = True)
-    username: Mapped[str] = mapped_column(nullable= False)
-    firstname: Mapped[str] = mapped_column(nullable = False)
-    lastname: Mapped[str] = mapped_column( nullable = False)
-    email: Mapped[str] = mapped_column(unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(nullable=False)
+    username: Mapped[str] = mapped_column(String(40), nullable= False)
+    firstname: Mapped[str] = mapped_column(String(60), nullable = False)
+    lastname: Mapped[str] = mapped_column(String(40), nullable = False)
+    email: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String(40),nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean(),nullable=False)
     comments : Mapped[List["Comment"]] = relationship(back_populates = "author")
     posts: Mapped[List["Post"]] = relationship(back_populates = "author")
-    users_followed: Mapped[List["Follower"]] = relationship(back_populates = "users_following")
-    users_following:  Mapped[List["Follower"]] = relationship(back_populates = "users_followed")
+    users_followed: Mapped[List["Follower"]] = relationship(back_populates = "follower_following")
+    users_following:  Mapped[List["Follower"]] = relationship(back_populates = "follower_followed")
 
 
     def serialize(self):
@@ -41,8 +41,8 @@ class Follower(db.Model):
 
         user_from_id: Mapped[int] = mapped_column(ForeignKey("User.id"))
         user_to_id: Mapped[int] = mapped_column(ForeignKey("User.id"))
-        users_following: Mapped["User"] = relationship(back_populates = "users_followed")
-        users_followed: Mapped["User"] = relationship(back_populates = "users_following")
+        follower_following: Mapped["User"] = relationship(back_populates = "users_followed")
+        follower_followed: Mapped["User"] = relationship(back_populates = "users_following")
 
         def serialize(self):
              return {
@@ -55,11 +55,11 @@ class Comment(db.Model):
         __tablename__ = "Comment"
 
         id: Mapped[int] = mapped_column(primary_key = True, autoincrement = True)
-        comment_text: Mapped[str] = mapped_column()
-        author_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-        post_id: Mapped[int] = mapped_column(nullable = False)
+        comment_text: Mapped[str] = mapped_column(String(1000))
+        author_id: Mapped[int] = mapped_column(ForeignKey("User.id"))
+        post_id: Mapped[int] = mapped_column(ForeignKey("Post.id"), nullable = False)
         author: Mapped["User"] = relationship(back_populates="comments")
-        post: Mapped["Post"] = relationship(back_populates= "comment")
+        post: Mapped["Post"] = relationship(back_populates= "comments")
 
         def serialize(self):
               return{
@@ -76,7 +76,7 @@ class Post(db.Model):
       user_id: Mapped[int] = mapped_column(ForeignKey("User.id"))
       author: Mapped["User"] = relationship(back_populates="posts")
       media_name: Mapped[List["Media"]] = relationship(back_populates= "post")
-      comment: Mapped[List["Comment"]] = relationship(back_populates = "post")
+      comments: Mapped[List["Comment"]] = relationship(back_populates = "post")
 
       def serialize(self):
             return{
