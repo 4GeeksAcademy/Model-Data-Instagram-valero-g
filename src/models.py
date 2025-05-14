@@ -38,7 +38,7 @@ class User(db.Model):
 
 class Follower(db.Model):
         __tablename__ = "Follower"
-
+        id: Mapped[int] = mapped_column(primary_key=True)    
         user_from_id: Mapped[int] = mapped_column(ForeignKey("User.id"))
         user_to_id: Mapped[int] = mapped_column(ForeignKey("User.id"))
         follower_following: Mapped["User"] = relationship(back_populates = "users_followed")
